@@ -1,0 +1,79 @@
+/*How much revenue did we generate from each product category, 
+after considering a 10% discount for products that cost more than $100  
+and a 5% discount for products that cost between $50 and $100?*/
+
+
+select "ProductCategory",
+		sum(case
+			when "Price" > 100 then "Price" * 0.9 * "Quantity"
+			when "Price" between 50 and 100 then "Price" * 0.95 * "Quantity"
+			else "Price" * "Quantity" 
+		end) "Discounted Price"
+from orders o
+join products p on p."ProductID" = o."ProductID"
+group by "ProductCategory", "Price";
+
+
+
+
+
+
+/* What is the total revenue generated, 
+considering that products with a NULL price should be treated as having a default price of 10?*/
+
+select sum(coalesce(p."Price", 10) * o."Quantity") "Total Revenue"
+from orders o
+join products p on p."ProductID" = o."ProductID";
+
+
+
+
+
+
+/* How many orders were placed in the year 2015*/
+
+select count(distinct"OrderID") 
+from orders
+where cast("OrderDate" as date) between '2015-01-01' and '2015-12-31';
+
+
+
+
+
+
+
+/*What is the name and category of the top-selling product (in terms of quantity) in the year 2015?*/
+
+select distinct "ProductName", "ProductCategory", sum ("Quantity") "total quantity sold"
+from products
+join orders on products."ProductID" = orders."ProductID" 
+where "OrderDate" between '2015-01-01' and '2015-12-31'
+group by "ProductName", "ProductCategory"
+order by "total quantity sold" desc
+limit 1;
+
+-- the below is if "Orderdate" was a different datatype than date
+select distinct "ProductName", "ProductCategory", sum ("Quantity") "total quantity sold"
+from products
+join orders on products."ProductID" = orders."ProductID" 
+where cast("OrderDate" as date)between '2015-01-01' and '2015-12-31'
+group by "ProductName", "ProductCategory"
+order by "total quantity sold" desc
+limit 1;
+
+
+--What is the average price of products that have never been ordered?
+
+select avg("Price")
+from products
+where "ProductID" not in (select distinct "ProductID" from orders);
+
+
+--to replace a null value
+select 
+	coalesce(
+		cast(avg ("Price") as text), 
+		'All products were ordered')
+from products
+where "ProductID" not in (
+	select distinct "ProductID" from orders);
